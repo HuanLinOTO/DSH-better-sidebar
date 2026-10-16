@@ -460,6 +460,7 @@ export const zhMO: Record<string, string> = {
   sideChatBlockExpandAria: '展開其餘 {hidden} 行',
   sideChatBlockSignal: '訊號終止：{signal}',
   sideChatBlockExitCode: '結束碼 {code}',
+  sideChatBlockCommandLine: '命令第 {line} 行',
   sideChatBlockNoExitCode: "已結束（無結束碼）",
   sideChatBlockRunning: '執行中',
   sideChatBlockFailed: '失敗',

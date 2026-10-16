@@ -445,6 +445,7 @@ export const th: Record<string, string> = {
   sideChatBlockExpandAria: 'ขยายอีก {hidden} บรรทัด',
   sideChatBlockSignal: 'ถูกยุตด้วยสัญญาณ: {signal}',
   sideChatBlockExitCode: 'รหัสออก {code}',
+  sideChatBlockCommandLine: 'บรรทัดคำสั่ง {line}',
   sideChatBlockNoExitCode: "สิ้นสุดโดยไม่มีรหัสออก",
   sideChatBlockRunning: 'กำลังทำงาน',
   sideChatBlockFailed: 'ล้มเหลว',

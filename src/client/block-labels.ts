@@ -37,6 +37,8 @@ export function blockLabels(): BlockLabels {
 
 /** The `TerminalBlockLabels` shape (structural mirror; the host owns the type). */
 export interface TerminalLabels {
+  /** Accessible name for an overflowing authored command line, numbered from one (DSH 0.2.1). */
+  commandLine: (line: number) => string
   signal: (signal: string) => string
   exitCode: (exitCode: number) => string
   noExitCode: string
@@ -56,6 +58,9 @@ export interface TerminalLabels {
 export function terminalBlockLabels(): TerminalLabels {
   return {
     ...blockLabels(),
+    // DSH 0.2.1: an overflowing command line gets a per-line accessible
+    // name (the block calls this with the 1-based line index).
+    commandLine: (line: number) => t('sideChatBlockCommandLine', { line }),
     signal: (signal: string) => t('sideChatBlockSignal', { signal }),
     exitCode: (exitCode: number) => t('sideChatBlockExitCode', { code: exitCode }),
     // DSH 0.1.6-alpha.2 added this pill text: a settle the view cannot

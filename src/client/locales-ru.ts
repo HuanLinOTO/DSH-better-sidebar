@@ -443,6 +443,7 @@ export const ru: Record<string, string> = {
   sideChatBlockExpandAria: 'Развернуть ещё {hidden} строк',
   sideChatBlockSignal: 'Завершён сигналом: {signal}',
   sideChatBlockExitCode: 'Код выхода {code}',
+  sideChatBlockCommandLine: 'Строка команды {line}',
   sideChatBlockNoExitCode: "Завершено без кода выхода",
   sideChatBlockRunning: 'Выполняется',
   sideChatBlockFailed: 'Ошибка',

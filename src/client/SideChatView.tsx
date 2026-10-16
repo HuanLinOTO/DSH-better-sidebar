@@ -585,6 +585,9 @@ export function SideChatView(props: {
       injectionLabel: t('sideChatInjection'),
       terminal: {
         ...shared,
+        // DSH 0.2.1: an overflowing command line gets a per-line accessible
+        // name (the block calls this with the 1-based line index).
+        commandLine: (line: number) => t('sideChatBlockCommandLine', { line }),
         signal: (signal: string) => t('sideChatBlockSignal', { signal }),
         exitCode: (exitCode: number) => t('sideChatBlockExitCode', { code: exitCode }),
         // DSH 0.1.6-alpha.2 added this pill text: a settle the view cannot
@@ -1170,7 +1173,12 @@ export function SideChatView(props: {
       if (binding !== undefined && title !== '') {
         await binding.session.rename(title)
       }
-      ctx.sessions.open?.(newId)
+      // DSH 0.2.1 moved main-view navigation off ISessions (`open` is gone)
+      // onto the workspace face; keep the old member as the pre-0.2.1
+      // fallback so this still switches on older hosts.
+      const workspace = ctx.get('uiWorkspace') as unknown as { openSession?: (target: unknown) => void } | undefined
+      if (typeof workspace?.openSession === 'function') workspace.openSession(newId)
+      else ctx.sessions.open?.(newId)
       setSaved(true)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause))

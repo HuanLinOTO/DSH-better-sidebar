@@ -9,14 +9,13 @@
  * conversation, same provider context-cache prefix — while the shadowed
  * bulk never lands in the durable copy. The construction is verified with
  * the REAL fold (`foldSurface` from `@deepseek-ai/dsh-session/surface`) and
- * pinned against the REAL session relational invariants
- * (`@deepseek-ai/dsh-session/invariant`): when the tail cannot be proven
+ * pinned against the seed relational rules (restated locally — DSH 0.2.1
+ * removed the runtime-invariants system): when the tail cannot be proven
  * equivalent, the builder falls back to today's verbatim full copy.
  */
 import { describe, expect, it } from 'vitest'
 import { deriveEventMessage, foldSurface } from '@deepseek-ai/dsh-session/surface'
 import { Session, SessionLogOffset, SESSION_FORMAT_VERSION } from '@deepseek-ai/dsh-session'
-import * as SessionInvariant from '@deepseek-ai/dsh-session/invariant'
 import type { SessionEvent, SessionId } from '@deepseek-ai/dsh-session'
 import { buildSidechatInheritance } from '../src/sidechat-core.ts'
 import type { SidebarSessionEvent } from '../src/context-types.ts'
@@ -264,22 +263,85 @@ function expectContiguous(seed: readonly { seq: number }[]): void {
   seed.forEach((event, index) => expect(event.seq).toBe(index))
 }
 
-/** Run the REAL session relational invariants over one candidate log and
- *  return the failure messages (empty = the log satisfies them). */
+/**
+ * Run the seed relational rules over one candidate log and return the
+ * failure messages (empty = the log satisfies them).
+ *
+ * DSH 0.2.1 removed the runtime-invariants system wholesale
+ * (`@deepseek-ai/dsh-session/invariant` no longer exists), so this spec
+ * restates the CORE of the removed session relational invariant locally —
+ * the same rules `turnSequenceValid` in sidechat-core.ts mirrors for its
+ * pre-check: turn numbers run 1, 2, … without nesting; steps run 1, 2, …
+ * inside the open turn and close before it; a `tool/result` must consume a
+ * pending `tool/call` of its step; a step cannot close with calls pending;
+ * seqs are contiguous from zero. The host's own per-event shape validation
+ * still runs inside `Session.create` (see the seed-acceptance case below),
+ * so envelope-level checks keep their REAL oracle — this checker owns only
+ * the cross-event rules the host no longer ships.
+ */
 function invariantFailures(log: readonly SidebarSessionEvent[]): string[] {
   const failures: string[] = []
-  const session = { snapshotEvents: () => log }
-  const ctx = {
-    sessions: { list: () => [session] },
-    on: () => {},
-    invariants: {
-      register: (_pkg: string, installer: (c: unknown, f: (m: string) => void) => void) => {
-        installer(ctx, (message: string) => { failures.push(message) })
-        return () => {}
-      },
-    },
-  }
-  void SessionInvariant.apply(ctx as never)
+  const fail = (message: string): void => { failures.push(message) }
+  let nextTurn = 1
+  let nextStep = 1
+  let openTurn: number | undefined
+  let openStep: number | undefined
+  let pendingCalls = new Set<string>()
+  log.forEach((event, index) => {
+    if (event.seq !== index) fail(`seq ${event.seq} at log position ${index} is not contiguous`)
+    const data = event.data as Record<string, unknown> | undefined
+    if (event.type === 'turn/start') {
+      if (openTurn !== undefined) fail(`turn/start inside open turn ${openTurn}`)
+      else if (data?.turn !== nextTurn) fail(`turn/start ${String(data?.turn)} expected ${nextTurn}`)
+      else {
+        openTurn = nextTurn
+        nextTurn += 1
+        nextStep = 1
+        openStep = undefined
+        pendingCalls = new Set()
+      }
+    } else if (event.type === 'turn/end') {
+      if (openTurn === undefined) fail('turn/end without an open turn')
+      else if (data?.turn !== openTurn) fail(`turn/end ${String(data?.turn)} expected ${openTurn}`)
+      else if (openStep !== undefined) fail(`turn/end with open step ${openStep}`)
+      else openTurn = undefined
+    } else if (event.type === 'step/start') {
+      if (openTurn === undefined) fail('step/start without an open turn')
+      else if (openStep !== undefined) fail(`step/start inside open step ${openStep}`)
+      else if (data?.turn !== openTurn || data?.step !== nextStep) fail(`step/start ${String(data?.turn)}/${String(data?.step)} expected ${openTurn}/${nextStep}`)
+      else {
+        openStep = nextStep
+        nextStep += 1
+        pendingCalls = new Set()
+      }
+    } else if (event.type === 'step/end') {
+      if (openTurn === undefined || openStep === undefined) fail('step/end without an open step')
+      else if (data?.turn !== openTurn || data?.step !== openStep) fail(`step/end ${String(data?.turn)}/${String(data?.step)} expected ${openTurn}/${openStep}`)
+      else {
+        if (pendingCalls.size > 0) fail(`step ${openStep} closes with pending calls: ${[...pendingCalls].join(', ')}`)
+        openStep = undefined
+      }
+    } else if (event.type === 'tool/call') {
+      if (typeof data?.turn === 'number' && data.turn !== openTurn) fail(`tool/call names turn ${data.turn}, open is ${String(openTurn)}`)
+      if (typeof data?.step === 'number' && data.step !== openStep) fail(`tool/call names step ${data.step}, open is ${String(openStep)}`)
+      const callId = data?.callId
+      if (typeof callId === 'string' && callId !== '') pendingCalls.add(callId)
+    } else if (event.type === 'tool/result') {
+      const op = (event as { surfaceOp?: unknown }).surfaceOp
+      if (op !== 'append') {
+        // A replacing tool/result shadows the original call's slot; the
+        // host exempted it from step naming and pairing.
+        if (openTurn === undefined) fail('replacing tool/result without an open turn')
+        return
+      }
+      if (typeof data?.turn === 'number' && data.turn !== openTurn) fail(`tool/result names turn ${data.turn}, open is ${String(openTurn)}`)
+      if (typeof data?.step === 'number' && data.step !== openStep) fail(`tool/result names step ${data.step}, open is ${String(openStep)}`)
+      const message = data?.message as { toolCallId?: string; source?: { callId?: string } } | undefined
+      const callId = message?.toolCallId ?? message?.source?.callId
+      if (callId === undefined) fail('append tool/result cites no callId')
+      else if (!pendingCalls.delete(callId)) fail(`tool/result ${callId} consumes no pending call`)
+    }
+  })
   return failures
 }
 
@@ -322,7 +384,7 @@ describe('buildSidechatInheritance compaction tail', () => {
     expect(child).toEqual(parent)
   })
 
-  it('satisfies the real session relational invariants', () => {
+  it('satisfies the seed relational rules (session invariants restated locally)', () => {
     const events = compactedLog()
     const { seed } = buildSidechatInheritance(events)
     expect(seed.length).toBeLessThan(events.length)

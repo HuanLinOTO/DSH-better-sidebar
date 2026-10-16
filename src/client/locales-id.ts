@@ -443,6 +443,7 @@ export const id: Record<string, string> = {
   sideChatBlockExpandAria: 'Perlihatkan {hidden} baris lagi',
   sideChatBlockSignal: 'Diakhiri sinyal: {signal}',
   sideChatBlockExitCode: 'Kode keluar {code}',
+  sideChatBlockCommandLine: 'Baris perintah {line}',
   sideChatBlockNoExitCode: "Berakhir tanpa kode keluar",
   sideChatBlockRunning: 'Berjalan',
   sideChatBlockFailed: 'Gagal',

@@ -110,12 +110,13 @@ export interface SidebarSessionStore {
 }
 
 /**
- * The web runtime service face (mirror of @deepseek-ai/dsh-web-app's
- * WebRuntimeValues): the bind-derived trust list the /api gateway's fence
+ * The web startup service face (mirror of @deepseek-ai/dsh-web-app's
+ * WebStartupValues): the bind-derived trust list the /api gateway's fence
  * accepts — LAN IP literals sampled when the server binds all interfaces,
- * plus explicit `--trusted-host` authorities.
+ * plus explicit `--trusted-host` authorities. DSH 0.2.1 renamed the service
+ * `webRuntime` → `webStartup`; the `trustedHosts` field is unchanged.
  */
-export interface SidebarWebRuntime {
+export interface SidebarWebStartup {
   trustedHosts: readonly string[]
 }
 
@@ -686,20 +687,6 @@ export interface SidebarWorkspacesService {
 }
 
 /**
- * The invariant service face (mirror of @deepseek-ai/dsh-invariants'
- * InvariantRegistry). The upstream augmentation does not reach this Context
- * (dual-cordis-instance resolution), so the register signature is restated
- * structurally, exactly like the other service faces above.
- */
-export interface SidebarInvariantsService {
-  /** Reserve one package's checks and install them in the service's child fiber. */
-  register(
-    packageName: string,
-    installer: (ctx: Context, fail: (message: string) => never) => void | Promise<void>,
-  ): () => void
-}
-
-/**
  * The settings service face (mirror of `@deepseek-ai/dsh-settings`'
  * `SettingsForms`).
  *
@@ -799,14 +786,12 @@ export interface SidebarContextShape {
   webServer: SidebarWebServer
   /** The session store (host `.get`) and the client list feed (`.list`) faces. */
   sessions: SidebarSessionStore & SidebarSessionsService
-  /** The web runtime trust list (bind-derived). */
-  webRuntime: SidebarWebRuntime
+  /** The web startup trust list (bind-derived; DSH 0.2.1 renamed the service). */
+  webStartup: SidebarWebStartup
   /** The client slot registry (register/inject). */
   slots: SidebarSlotsService
   /** The settings service face (prefs persistence + namespace reads). */
   settings: SidebarSettingsService
-  /** The invariant registry face. */
-  invariants: SidebarInvariantsService
   /** The tool registry face. */
   tools: SidebarToolsService
   /** The client locale service face. */

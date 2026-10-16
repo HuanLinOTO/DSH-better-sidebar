@@ -138,11 +138,17 @@ describe('DSH community-market manifest compatibility', () => {
     // `0.2.0-rc.2`, because only carets get the `-0` upper bound — which is why
     // the assertion below pins the baseline tuple instead of accepting any
     // caret that looks plausible.)
+    //
+    // DSH 0.2.1-alpha.5 baseline: same rule, new tuple. `^0.2.1-alpha.5`
+    // expands to `>=0.2.1-alpha.5 <0.2.2-0`, admitting every 0.2.1 prerelease
+    // and final while refusing a 0.2.2 host. The removed
+    // `@deepseek-ai/dsh-invariants` peer is gone with the runtime-invariants
+    // system (upstream deleted the package in 0.2.1).
     const peers = pkg.peerDependencies ?? {}
     const dshPeers = Object.keys(peers).filter(name => name === '@deepseek-ai/dsh' || name.startsWith('@deepseek-ai/dsh-'))
     expect(dshPeers.length).toBeGreaterThan(10)
     for (const name of dshPeers) {
-      expect(peers[name], name).toMatch(/^\^0\.2\.0-[a-z0-9.]+$/)
+      expect(peers[name], name).toMatch(/^\^0\.2\.1-[a-z0-9.]+$/)
     }
   })
 })

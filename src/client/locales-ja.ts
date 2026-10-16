@@ -445,6 +445,7 @@ export const ja: Record<string, string> = {
   sideChatBlockExpandAria: '残り {hidden} 行を展開',
   sideChatBlockSignal: 'シグナルで終了：{signal}',
   sideChatBlockExitCode: '終了コード {code}',
+  sideChatBlockCommandLine: 'コマンド {line} 行目',
   sideChatBlockNoExitCode: '終了（終了コードなし）',
   sideChatBlockRunning: '実行中',
   sideChatBlockFailed: '失敗',

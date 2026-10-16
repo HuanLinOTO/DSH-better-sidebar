@@ -31,7 +31,7 @@
 
 本地：`pnpm build && pnpm pack && pnpm exec playwright install chromium && pnpm test:mount`。
 
-- **钉版写精确版本号，绝不写 dist-tag**（`alpha` / `latest` / `next` 的指向与候选版经常不一致）；默认与 CI 同为 `@deepseek-ai/dsh@0.2.0-rc.2`。
+- **钉版写精确版本号，绝不写 dist-tag**（`alpha` / `latest` / `next` 的指向与候选版经常不一致）；默认与 CI 同为 `@deepseek-ai/dsh@0.2.1-alpha.5`。
 - 该步骤需要 `NODE_OPTIONS=--max-old-space-size=4096`（浮动的传递依赖会组出混合 peer 图 → ERESOLVE 后 OOM）；**不要加 `--legacy-peer-deps`**（会跳掉 boot 必需的 peer，CLI 直接 `ERR_MODULE_NOT_FOUND`）。
 - 本机 npm registry 是 npmmirror、对新预发布滞后：装不到时 `pnpm install --registry https://registry.npmjs.org`。
 - Windows lane 跑 `pnpm test:windows`（`--maxWorkers=1`），`vitest.config.ts` 的 `testTimeout: 30_000` 与它配套。e2e spec 命名 `*.e2e.ts` + vitest `exclude` 双保险；**改 `exclude` 必须保留默认排除项**。
@@ -40,9 +40,9 @@
 
 ## 3. DSH 版本适配
 
-- **当前基线 DSH 0.2.0-rc.2（v0.25.0 起）**。14 条 `@deepseek-ai/dsh-*` peer 一律写 `^<基线>` 浮动 caret 范围、**绝不钉精确版本**（只有 devDependencies 精确钉）；精确版本、或没有预发布子句的范围会被宿主启动预检整行静默禁用。`tests/market-manifest.spec.ts` 钉住这条形状。
+- **当前基线 DSH 0.2.1-alpha.5**。13 条 `@deepseek-ai/dsh-*` peer 一律写 `^<基线>` 浮动 caret 范围、**绝不钉精确版本**（只有 devDependencies 精确钉）；精确版本、或没有预发布子句的范围会被宿主启动预检整行静默禁用。`tests/market-manifest.spec.ts` 钉住这条形状。（DSH 0.2.1 删除了 `@deepseek-ai/dsh-invariants` 包与全部 `./invariant` 子路径，invariant companion 入口随基线移除。）
 - **caret 跨不过 minor**：`^0.1.7-rc.1` 对 `0.2.0-rc.1` 判定为 false → 整行 `disabled`、插件静默不加载。**抬基线必须同批抬 peer 下限。**
-- 支持线（用户侧）：0.2.0-rc.1 及更早（含 0.1.7 线）固定 v0.24.1；0.1.7 线的最后支持版是 **v0.22.1**（v0.23.0 从未发布到 npm）。按本仓库先例**不写运行时兼容层**。
+- 支持线（用户侧）：0.2.0-rc.2 及更早（含 0.2.0-rc.1、0.1.7 线）固定 v0.27.0；0.1.7 线的最后支持版是 **v0.22.1**（v0.23.0 从未发布到 npm）。按本仓库先例**不写运行时兼容层**。
 - **抬基线动作清单**：① `pnpm peers check`，把失配的传递 peer 提升进 devDependencies；② 扫宿主包产物的**裸 import 差集**（`pnpm peers check` 看不到这类失败，0.1.7 线是 `zustand` / `immer`）；③ 对消费的宿主包做类型面 diff（重点 `ui-primitives` / `dsh-session` / `sidebar-right`），确认导出只增不减；④ 复查会话格式版本、`SUBAGENT_DESCRIPTOR_VERSION`、web profile 的 inject 列表；⑤ 同批同步 CI 钉版、`scripts/e2e-common.sh`、**`scripts/install.sh`（随包发布、会直接给用户 npx 命令）** 与 README / 指南的版本行。
 - **用户 profile 自己的 `overrides: '@deepseek-ai/dsh-*'` 要同批抬**，否则旧包遮蔽 bundle → 预检禁用 `config-editor` → `settings` 行永久 `pending`；先看宿主日志的 `disabling profile plugin row` 与 `pending (waiting for service: …)`。
 - 动设置面 / sidechat / 原生 tab 之前，先读 [docs/host-contracts.md](docs/host-contracts.md)（原 §3.4 的 1–12 条按原编号都在那里）。

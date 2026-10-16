@@ -446,6 +446,7 @@ export const ar: Record<string, string> = {
   sideChatBlockExpandAria: 'توسيع {hidden} أسطر إضافية',
   sideChatBlockSignal: 'أُنهي بالإشارة: {signal}',
   sideChatBlockExitCode: 'رمز الخروج {code}',
+  sideChatBlockCommandLine: 'سطر الأوامر {line}',
   sideChatBlockNoExitCode: "انتهى دون رمز خروج",
   sideChatBlockRunning: 'قيد التشغيل',
   sideChatBlockFailed: 'فشل',

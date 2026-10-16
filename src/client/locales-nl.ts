@@ -443,6 +443,7 @@ export const nl: Record<string, string> = {
   sideChatBlockExpandAria: '{hidden} regels meer uitvouwen',
   sideChatBlockSignal: 'Beëindigd door signaal: {signal}',
   sideChatBlockExitCode: 'Exitcode {code}',
+  sideChatBlockCommandLine: 'Opdrachtregel {line}',
   sideChatBlockNoExitCode: "Beëindigd zonder exitcode",
   sideChatBlockRunning: 'Wordt uitgevoerd',
   sideChatBlockFailed: 'Mislukt',

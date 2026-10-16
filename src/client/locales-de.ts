@@ -431,6 +431,7 @@ export const de: Record<string, string> = {
   sideChatBlockExpandAria: '{hidden} weitere Zeilen ausklappen',
   sideChatBlockSignal: 'Durch Signal beendet: {signal}',
   sideChatBlockExitCode: 'Exit-Code {code}',
+  sideChatBlockCommandLine: 'Befehlszeile {line}',
   sideChatBlockNoExitCode: "Ohne Exit-Code beendet",
   sideChatBlockRunning: 'Läuft',
   sideChatBlockFailed: 'Fehlgeschlagen',
