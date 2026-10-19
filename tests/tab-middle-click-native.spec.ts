@@ -149,6 +149,27 @@ describe('right-Sidebar chip middle-click close', () => {
     } finally { dispose() }
   })
 
+  it('ignores a chip that carries no tab id', () => {
+    const { closeTab, dispose } = install()
+    const target = chip('')
+    try {
+      middleClick(target)
+      expect(closeTab).not.toHaveBeenCalled()
+    } finally { dispose() }
+  })
+
+  it('drops a press whose chip left the document before the release', () => {
+    const { closeTab, dispose } = install()
+    const target = chip('t1')
+    try {
+      fire(target, 'pointerdown', 1)
+      fire(target, 'mousedown', 1)
+      target.remove()
+      fire(target, 'mouseup', 1)
+      expect(closeTab).not.toHaveBeenCalled()
+    } finally { dispose() }
+  })
+
   it('stops closing after dispose', () => {
     const { closeTab, dispose } = install()
     const target = chip('t1')
